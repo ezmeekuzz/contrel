@@ -1,0 +1,696 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif !important;
+    font-style: normal;
+    color: #212529;
+    background-color: #fff;
+    overflow-x: hidden;
+}
+
+/* Hero Section */
+.hero > .container {
+    position: relative;
+    z-index: 2;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+/* Navigation */
+.navbar-custom {
+    background-color: rgba(129, 134, 136, 0.3) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Language Toggle */
+.radio-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.radio-slider {
+    position: relative;
+    width: 100px;
+    height: 36px;
+    background-color: #152131;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.radio-slider-option {
+    position: relative;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    color: rgba(242, 235, 235, 0.7);
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: color 0.3s ease;
+    cursor: pointer;
+}
+
+.radio-slider-option.active {
+    color: #fff;
+}
+
+.radio-slider-slider {
+    position: absolute;
+    left: 3px;
+    width: 44px;
+    height: 30px;
+    background-color: #FDC900;
+    border-radius: 5px;
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.radio-slider input[type="radio"] {
+    display: none;
+}
+
+#it-option:checked ~ .radio-slider-slider {
+    transform: translateX(0);
+}
+
+#br-option:checked ~ .radio-slider-slider {
+    transform: translateX(50px);
+}
+
+.product-slide {
+    background: #0E152A;
+    min-height: 300px;
+}
+
+.slider-section .img-container {
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slider-section .img-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.whole-solutions-section {
+    background: #0E152A;
+}
+
+.multiple-card-section {
+    background: #0E152A;
+}
+
+.min-height-200px {
+    min-height: 400px;
+}
+
+
+/* Truncation styles */
+.text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.5em;
+    max-height: 3em; /* 2 lines x 1.5em line height */
+    min-height: 3em; /* Ensure consistent height even with shorter text */
+}
+
+.text-truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.5em;
+    max-height: 4.5em; /* 3 lines x 1.5em line height */
+    min-height: 4.5em; /* Ensure consistent height even with shorter text */
+}
+
+/* Ensure images maintain aspect ratio */
+.img-container {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.img-container img {
+    object-fit: cover;
+    height: 100%;
+    width: 100%;
+}
+
+/* Owl Carousel adjustments */
+.owl-carousel .owl-stage {
+    display: flex;
+}
+
+.owl-carousel .owl-item {
+    display: flex;
+    height: auto;
+}
+
+.gallery-item {
+    height: 300px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.gallery-item:hover {
+    transform: translateY(-5px);
+}
+
+.gallery-item img {
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.gallery-item:hover img {
+    transform: scale(1.05);
+}
+
+.gallery-overlay {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.gallery-item:hover .gallery-overlay {
+    opacity: 1;
+}
+
+.gallery-nav {
+    margin-top: 2rem;
+}
+
+.product-card {
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.product-image {
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.product-image img {
+    max-height: 200px;
+    width: auto;
+    object-fit: contain;
+}
+
+.product-content {
+    padding: 20px;
+}
+
+.product-specs {
+    margin-top: 15px;
+}
+
+.spec-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9rem;
+}
+
+.spec-item:last-child {
+    border-bottom: none;
+}
+
+.spec-label {
+    color: #999;
+}
+
+.spec-value {
+    color: #fff;
+    font-weight: 500;
+}
+
+.category-sidebar {
+    background: #1a2238;
+    border-radius: 12px;
+    padding: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.category-list li {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.category-list li:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.category-list a {
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: color 0.3s ease;
+}
+
+.category-list a:hover {
+    color: #FDC900;
+}
+
+.category-list a i {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.category-list a:hover i {
+    opacity: 1;
+}
+
+.sidebar-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #FDC900;
+}
+
+.product-grid-header {
+    margin-bottom: 30px;
+}
+
+.product-grid-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.view-details-btn {
+    background: rgba(253, 201, 0, 0.1);
+    color: #FDC900;
+    border: 1px solid rgba(253, 201, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.view-details-btn:hover {
+    background: #FDC900;
+    color: #000;
+    border-color: #FDC900;
+}
+
+/* Right-aligned Search Bar Styles */
+.search-container-right .input-group {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.search-container-right .form-control {
+    border: 1px solid #dee2e6;
+    border-right: none;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    height: 48px;
+}
+
+.search-container-right .form-control:focus {
+    box-shadow: none;
+    border-color: #dee2e6;
+    border-right: none;
+}
+
+.search-container-right .btn-warning {
+    background-color: #FDC900;
+    border: 1px solid #FDC900;
+    color: #212529;
+    padding: 0 20px;
+    height: 48px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-container-right .btn-warning:hover {
+    background-color: #e6b800;
+    border-color: #e6b800;
+}
+
+/* Product grid header layout */
+.product-grid-header {
+    width: 100%;
+}
+
+/* Custom Accordion Styles with Plus/Minus Icons */
+.custom-accordion .accordion-button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 12px 0 !important;
+}
+
+.custom-accordion .accordion-button:not(.collapsed) {
+    color: #FDC900 !important;
+    border-bottom-color: #FDC900 !important;
+}
+
+.custom-accordion .accordion-button::after {
+    display: none !important;
+}
+
+.custom-accordion .accordion-button .accordion-custom-icon {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.custom-accordion .accordion-button:not(.collapsed) .accordion-custom-icon {
+    transform: rotate(45deg);
+    color: #FDC900 !important;
+}
+
+.custom-accordion .accordion-body {
+    padding: 10px 0 5px 0 !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+.custom-accordion .accordion-body ul {
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-accordion .accordion-body ul li {
+    padding: 6px 0;
+    position: relative;
+}
+
+.custom-accordion .accordion-body ul li:before {
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    background: #FDC900;
+    border-radius: 50%;
+}
+
+.custom-accordion .accordion-body ul li a {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: block;
+    padding-left: 5px;
+}
+
+.custom-accordion .accordion-body ul li a:hover {
+    color: #FDC900 !important;
+    padding-left: 10px;
+}
+
+/* Sidebar Title Styling */
+.sidebar-title {
+    color: #fff;
+    border-bottom: 2px solid #FDC900;
+}
+
+/* Yellow Boxes Styling */
+.bg-warning {
+    background-color: #FDC900 !important;
+}
+
+.bg-warning span {
+    color: #000;
+    font-weight: 600;
+}
+
+.bg-warning .list-group-item {
+    color: #212529;
+    font-size: 0.9rem;
+}
+
+.bg-warning hr {
+    border-color: rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+/* Square buttons styling */
+.square-button {
+    aspect-ratio: 1/1; /* Makes the button square */
+    height: auto; /* Let the aspect ratio control height */
+    padding: 1rem !important;
+    border-radius: 8px;
+    border-width: 2px;
+    transition: all 0.3s ease;
+}
+
+.square-button i {
+    font-size: 2rem;
+}
+
+.square-button span {
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.square-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Alternative: Fixed height square buttons (if aspect-ratio isn't supported) */
+.square-button.fixed-square {
+    height: 120px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #dee2e6;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.btn-close-circle:hover {
+    background: #e9ecef;
+    border: solid 2px #000000;
+}
+
+.btn-close-circle i {
+    font-size: .8rem;
+    color: #000;
+}
+
+.btn-close-circle:hover i {
+    color: #495057;
+}
+
+.product-catalogue .product-catalogue-slide {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    border-color: #ffc107 !important;
+}
+
+.product-catalogue .product-catalogue-slide h4 {
+    font-size: 1.2em;
+}
+
+.documentation-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.documentation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.documentation-card h5 {
+    color: #212529;
+    font-size: 1.1rem;
+    line-height: 1.4;
+    min-height: 60px;
+}
+
+.document-details {
+    border-top: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 0;
+}
+
+.btn-dark {
+    background-color: #212529;
+    border-color: #212529;
+    transition: all 0.3s ease;
+}
+
+.btn-dark:hover {
+    background-color: #0E152A;
+    border-color: #0E152A;
+    transform: translateY(-2px);
+}
+
+.carousel-inner {
+    padding: 10px 0;
+}
+
+.carousel-item {
+    transition: transform 0.6s ease-in-out;
+}
+
+/* Navigation button styles */
+.custom-carousel-nav .btn {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #212529;
+    transition: all 0.3s ease;
+}
+
+.custom-carousel-nav .btn:hover {
+    background-color: #212529;
+    color: white;
+}
+
+.documentation-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.documentation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.product-image-container {
+    height: 300px;
+    overflow: hidden;
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.product-image-container img {
+    max-height: 100%;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    padding: 15px;
+}
+
+.btn-dark {
+    background-color: #212529;
+    border-color: #212529;
+    transition: all 0.3s ease;
+}
+
+.btn-dark:hover {
+    background-color: #0E152A;
+    border-color: #0E152A;
+    transform: translateY(-2px);
+}
+
+.bg-warning-checked:active,
+.btn-check:checked + .bg-warning-checked {
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+
+/* Radio button checked state */
+.btn-check:checked + .btn.btn-outline-dark {
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+/* Drag & drop area styling */
+.border-dashed {
+    border-style: dashed !important;
+}
+
+.drag-drop-area {
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.drag-drop-area:hover,
+.drag-drop-area.dragover {
+    background-color: #e9ecef;
+    border-color: #495057 !important;
+}
+
+.file-item {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-item:last-child {
+    margin-bottom: 0;
+}
