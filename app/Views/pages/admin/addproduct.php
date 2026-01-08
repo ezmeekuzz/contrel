@@ -27,7 +27,7 @@
 
             <form id="addproduct" enctype="multipart/form-data">
                 <div class="row">
-                    <div class="col-lg-12">
+                    <div class="col-lg-8">
                         <div class="card card-statistics">
                             <div class="card-header">
                                 <div class="card-heading">
@@ -224,31 +224,200 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Right Side Column for Categories -->
+                    <div class="col-lg-4">
+                        <div class="card card-statistics">
+                            <div class="card-header">
+                                <h4 class="card-title"><i class="fa fa-tags"></i> Product Categories</h4>
+                            </div>
+                            <div class="card-body">
+                                <!-- Add New Category Section -->
+                                <div class="form-group mb-4">
+                                    <label for="newCategory">Add New Category</label>
+                                    <div class="input-group">
+                                        <input type="text" id="newCategory" class="form-control" placeholder="Enter category name">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-primary" id="addCategoryBtn">
+                                                <i class="fa fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted">Add new categories as needed</small>
+                                </div>
+                                
+                                <!-- Category Checkboxes -->
+                                <div class="form-group">
+                                    <label>Select Categories</label>
+                                    <div id="categoryCheckboxes" class="category-list" style="max-height: 400px; overflow-y: auto;">
+                                        <?php if(isset($categories) && !empty($categories)): ?>
+                                            <?php foreach($categories as $category): ?>
+                                                <div class="custom-control custom-checkbox mb-2 category-item" id="category_item_<?=$category['id'];?>">
+                                                    <input type="checkbox" class="custom-control-input category-checkbox" 
+                                                        id="category_<?=$category['id'];?>" 
+                                                        name="categories[]" 
+                                                        value="<?=$category['id'];?>">
+                                                    <label class="custom-control-label d-flex justify-content-between align-items-center" for="category_<?=$category['id'];?>">
+                                                        <span><?=htmlspecialchars($category['name']);?></span>
+                                                        <button type="button" class="btn btn-xs btn-outline-danger delete-category" data-id="<?=$category['id'];?>">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                    </label>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <div class="text-muted text-center py-3">
+                                                No categories yet. Add your first category above.
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <small class="form-text text-muted">Check all categories this product belongs to</small>
+                                </div>
+                                
+                                <!-- Quick Stats -->
+                                <div class="border-top pt-3 mt-3">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">Total Categories:</small>
+                                        <small class="font-weight-bold" id="totalCategories">
+                                            <?=isset($categories) ? count($categories) : 0;?>
+                                        </small>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">Selected:</small>
+                                        <small class="font-weight-bold" id="selectedCategories">0</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
-<!-- Media Manager Modal -->
-<div class="modal fade" id="mediaManagerModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Media Library</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center">
-                    <p class="text-muted">Media library functionality would be implemented here</p>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <?=$this->include('templates/admin/footer');?>
 <script src="<?=base_url();?>assets/js/admin/addproduct.js"></script>
+<script>
+$(document).ready(function() {
+    let categoryCounter = <?=isset($categories) ? count($categories) : 0;?>;
+    
+    // Function to update category counters
+    function updateCategoryCounters() {
+        const totalCategories = $('.category-item').length;
+        const selectedCategories = $('.category-checkbox:checked').length;
+        
+        $('#totalCategories').text(totalCategories);
+        $('#selectedCategories').text(selectedCategories);
+    }
+    
+    // Initialize counters
+    updateCategoryCounters();
+    
+    // Add new category
+    $('#addCategoryBtn').click(function() {
+        const categoryName = $('#newCategory').val().trim();
+        
+        if (categoryName === '') {
+            alert('Please enter a category name');
+            return;
+        }
+        
+        // Generate a temporary ID for new categories
+        const tempId = -(++categoryCounter);
+        
+        // Create the new category checkbox
+        const checkboxHtml = `
+            <div class="custom-control custom-checkbox mb-2 category-item" id="category_item_${tempId}">
+                <input type="checkbox" class="custom-control-input category-checkbox" 
+                       id="category_${tempId}" 
+                       name="categories[]" 
+                       value="${tempId}" 
+                       checked>
+                <label class="custom-control-label d-flex justify-content-between align-items-center" for="category_${tempId}">
+                    <span>${escapeHtml(categoryName)}</span>
+                    <input type="hidden" name="new_categories[]" value="${escapeHtml(categoryName)}">
+                    <button type="button" class="btn btn-xs btn-outline-danger delete-category" data-id="${tempId}">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </label>
+            </div>
+        `;
+        
+        // Add to the top of the list
+        $('#categoryCheckboxes').prepend(checkboxHtml);
+        
+        // Clear the input field
+        $('#newCategory').val('');
+        
+        // Update counters
+        updateCategoryCounters();
+        
+        // Scroll to show the new category
+        $(`#category_item_${tempId}`)[0].scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    });
+    
+    // Delete category
+    $(document).on('click', '.delete-category', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const categoryId = $(this).data('id');
+        const categoryName = $(this).closest('label').find('span').text();
+        
+        if (categoryId < 0) {
+            // For new categories (negative IDs), just remove from DOM
+            $(`#category_item_${categoryId}`).remove();
+            updateCategoryCounters();
+        } else {
+            // For existing categories from database
+            if (confirm(`Are you sure you want to delete the category "${categoryName}"? This will remove it from all products.`)) {
+                // Make AJAX call to delete category from database
+                $.ajax({
+                    url: '<?=base_url();?>admin/categories/delete',
+                    type: 'POST',
+                    data: { 
+                        id: categoryId,
+                        _token: '<?=csrf_token();?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $(`#category_item_${categoryId}`).remove();
+                            updateCategoryCounters();
+                        } else {
+                            alert('Error deleting category: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Error deleting category. Please try again.');
+                    }
+                });
+            }
+        }
+    });
+    
+    // Enter key to add category
+    $('#newCategory').keypress(function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $('#addCategoryBtn').click();
+        }
+    });
+    
+    // Update selected count when checkboxes change
+    $(document).on('change', '.category-checkbox', function() {
+        updateCategoryCounters();
+    });
+    
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+});
+</script>
