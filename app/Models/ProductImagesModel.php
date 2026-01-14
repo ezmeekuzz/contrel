@@ -4,16 +4,16 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class ProductsModel extends Model
+class ProductImagesModel extends Model
 {
-    protected $table            = 'products';
-    protected $primaryKey       = 'product_id';
+    protected $table            = 'product_images';
+    protected $primaryKey       = 'product_image_id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'product_name', 'slug',  'order_code', 'short_description', 'description', 'weight_kg', 'qty_per_package', 'package_length_mm', 'package_width_mm', 'package_height_mm', 'volume_cm3', 'barcode_ean13', 'hs_code', 'main_image', 'data_sheet', 'wiring_diagram', 'dimensions_image', 'view_360_image', 'publish_status'
+        'product_id', 'image_path', 'thumbnail_path', 'sort_order'
     ];
 
     protected bool $allowEmptyInserts = false;

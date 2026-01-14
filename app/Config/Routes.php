@@ -39,8 +39,8 @@ $routes->get('/admin/subscribers/getData', 'Admin\SubscribersController::getData
 $routes->delete('/admin/subscribers/delete/(:num)', 'Admin\SubscribersController::delete/$1');
 $routes->get('/admin/add-product', 'Admin\AddProductController::index');
 $routes->post('/admin/addproduct/insert', 'Admin\AddProductController::insert');
+$routes->get('/admin/addproduct/getCategories', 'Admin\AddProductController::getCategories');
+$routes->post('/admin/addproduct/addCategory', 'Admin\AddProductController::addCategory');
+$routes->delete('/admin/addproduct/deleteCategory/(:num)', 'Admin\AddProductController::deleteCategory/$1');
 
-/*require APPPATH . 'Config/ServiceCategoryRoutes.php';
-require APPPATH . 'Config/PortfolioCategoryRoutes.php';
-require APPPATH . 'Config/ServicesRoutes.php';
-require APPPATH . 'Config/PortfoliosRoutes.php';*/
+require APPPATH . 'Config/ProductsRoutes.php';
