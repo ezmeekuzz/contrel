@@ -9,7 +9,7 @@ use App\Models\ProductsModel;
 use App\Models\ProductCategoriesModel;
 use App\Models\ProductImagesModel;
 
-class AddProductController extends SessionController
+class EditProductController extends SessionController
 {
     private $uploadPath;
     private $allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -31,30 +31,76 @@ class AddProductController extends SessionController
         }
     }
     
-    public function index()
+    public function index($productId = null)
     {
+        if (!$productId) {
+            return redirect()->to('/admin/products')->with('error', 'Product ID is required');
+        }
+
+        $productsModel = new ProductsModel();
+        $product = $productsModel->find($productId);
+        
+        if (!$product) {
+            return redirect()->to('/admin/products')->with('error', 'Product not found');
+        }
+
+        // Get product categories
+        $productCategoriesModel = new ProductCategoriesModel();
         $categoriesModel = new CategoriesModel();
+        
+        $productCategories = $productCategoriesModel->where('product_id', $productId)->findAll();
+        $selectedCategories = array_column($productCategories, 'category_id');
+        
+        // Get all categories
         $categories = $categoriesModel->findAll();
+        
+        // Get product images
+        $productImagesModel = new ProductImagesModel();
+        $additionalImages = $productImagesModel->where('product_id', $productId)->orderBy('sort_order', 'ASC')->findAll();
 
         $data = [
-            'title' => 'Contrel | Add Product',
-            'currentpage' => 'addproduct',
-            'categories' => $categories
+            'title' => 'Contrel | Edit Product',
+            'currentpage' => 'productmasterlist',
+            'product' => $product,
+            'categories' => $categories,
+            'selectedCategories' => $selectedCategories,
+            'additionalImages' => $additionalImages
         ];
 
-        return view('pages/admin/addproduct', $data);
+        return view('pages/admin/editproduct', $data);
     }
 
-    public function insert()
+    public function update($productId = null)
     {
         try {
+            if (!$productId) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Product ID is required'
+                ]);
+            }
+
+            $productsModel = new ProductsModel();
+            $product = $productsModel->find($productId);
+            
+            if (!$product) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Product not found'
+                ]);
+            }
+
             // Validate required fields
             $validationRules = [
                 'productname' => 'required|min_length[2]|max_length[255]',
                 'order_code' => 'required',
-                'description' => 'required',
-                'backgroundimage' => 'uploaded[backgroundimage]|max_size[backgroundimage,5120]|mime_in[backgroundimage,' . implode(',', $this->allowedImageTypes) . ']|ext_in[backgroundimage,jpg,jpeg,png,gif,webp]'
+                'description' => 'required'
             ];
+            
+            // Only validate backgroundimage if it's being uploaded
+            if ($this->request->getFile('backgroundimage')->isValid()) {
+                $validationRules['backgroundimage'] = 'max_size[backgroundimage,5120]|mime_in[backgroundimage,' . implode(',', $this->allowedImageTypes) . ']|ext_in[backgroundimage,jpg,jpeg,png,gif,webp]';
+            }
             
             if (!$this->validate($validationRules)) {
                 return $this->response->setJSON([
@@ -63,9 +109,10 @@ class AddProductController extends SessionController
                 ]);
             }
             
-            // Check if order code already exists
-            $productsModel = new ProductsModel();
-            $existingProduct = $productsModel->where('order_code', $this->request->getPost('order_code'))->first();
+            // Check if order code already exists (excluding current product)
+            $orderCode = $this->request->getPost('order_code');
+            $existingProduct = $productsModel->where('order_code', $orderCode)->where('product_id !=', $productId)->first();
+            
             if ($existingProduct) {
                 return $this->response->setJSON([
                     'success' => false,
@@ -74,7 +121,7 @@ class AddProductController extends SessionController
             }
             
             // Handle file uploads
-            $uploadedFiles = $this->handleFileUploads();
+            $uploadedFiles = $this->handleFileUploads($product);
             if (!$uploadedFiles['success']) {
                 return $this->response->setJSON([
                     'success' => false,
@@ -82,14 +129,19 @@ class AddProductController extends SessionController
                 ]);
             }
 
-        // Generate unique slug
-        $slug = $this->generateSlug($this->request->getPost('productname'));
-        
-            // Prepare product data according to your model
+            // Generate new slug if product name changed
+            if ($product['product_name'] != $this->request->getPost('productname')) {
+                $slug = $this->generateSlug($this->request->getPost('productname'), $productId);
+            } else {
+                $slug = $product['slug'];
+            }
+            
+            // Prepare product data
             $productData = [
+                'product_id' => $productId,
                 'product_name' => $this->request->getPost('productname'),
                 'slug' => $slug,
-                'order_code' => $this->request->getPost('order_code'),
+                'order_code' => $orderCode,
                 'short_description' => $this->request->getPost('short_description'),
                 'description' => $this->request->getPost('description'),
                 'weight_kg' => $this->request->getPost('weight') ? floatval($this->request->getPost('weight')) : null,
@@ -105,56 +157,96 @@ class AddProductController extends SessionController
             
             // Add uploaded file paths to product data
             if (isset($uploadedFiles['data']['backgroundimage'])) {
+                // Delete old main image if exists
+                if ($product['main_image']) {
+                    $oldImagePath = $this->uploadPath . $product['main_image'];
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
+                }
                 $productData['main_image'] = $uploadedFiles['data']['backgroundimage'];
             }
+            
             if (isset($uploadedFiles['data']['data_sheet'])) {
+                // Delete old data sheet if exists
+                if ($product['data_sheet']) {
+                    $oldDocPath = $this->uploadPath . $product['data_sheet'];
+                    if (file_exists($oldDocPath)) {
+                        unlink($oldDocPath);
+                    }
+                }
                 $productData['data_sheet'] = $uploadedFiles['data']['data_sheet'];
             }
+            
             if (isset($uploadedFiles['data']['wiring_diagram'])) {
+                // Delete old wiring diagram if exists
+                if ($product['wiring_diagram']) {
+                    $oldWiringPath = $this->uploadPath . $product['wiring_diagram'];
+                    if (file_exists($oldWiringPath)) {
+                        unlink($oldWiringPath);
+                    }
+                }
                 $productData['wiring_diagram'] = $uploadedFiles['data']['wiring_diagram'];
             }
+            
             if (isset($uploadedFiles['data']['dimensions_image'])) {
+                // Delete old dimensions image if exists
+                if ($product['dimensions_image']) {
+                    $oldDimPath = $this->uploadPath . $product['dimensions_image'];
+                    if (file_exists($oldDimPath)) {
+                        unlink($oldDimPath);
+                    }
+                }
                 $productData['dimensions_image'] = $uploadedFiles['data']['dimensions_image'];
             }
+            
             if (isset($uploadedFiles['data']['view_360_image'])) {
+                // Delete old 360 image if exists
+                if ($product['view_360_image']) {
+                    $old360Path = $this->uploadPath . $product['view_360_image'];
+                    if (file_exists($old360Path)) {
+                        unlink($old360Path);
+                    }
+                }
                 $productData['view_360_image'] = $uploadedFiles['data']['view_360_image'];
             }
             
-            // Insert product
+            // Update product
             if ($productsModel->save($productData)) {
-                $productId = $productsModel->insertID();
-                
                 // Handle categories
                 $this->handleCategories($productId);
                 
                 // Handle additional images
                 $this->handleAdditionalImages($productId, $uploadedFiles['additional_images']);
                 
-                // Generate dynamic routes after successful insert
+                // Handle image deletions
+                $this->handleImageDeletions($productId);
+                
+                // Generate dynamic routes after successful update
                 $this->dynamicRoutes();
                 
                 return $this->response->setJSON([
                     'success' => true,
-                    'message' => 'Product saved successfully',
+                    'message' => 'Product updated successfully',
                     'product_id' => $productId
                 ]);
             } else {
                 return $this->response->setJSON([
                     'success' => false,
-                    'message' => 'Failed to save product to database'
+                    'message' => 'Failed to update product in database'
                 ]);
             }
 
         } catch (\Exception $e) {
-            log_message('error', 'Product Insert Error: ' . $e->getMessage());
+            log_message('error', 'Product Update Error: ' . $e->getMessage());
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Error saving product: ' . $e->getMessage()
+                'message' => 'Error updating product: ' . $e->getMessage()
             ]);
         }
     }
 
-    private function handleFileUploads()
+    private function handleFileUploads($existingProduct = null)
     {
         $uploadedData = [
             'success' => true,
@@ -163,7 +255,7 @@ class AddProductController extends SessionController
             'additional_images' => []
         ];
         
-        // Handle main image (backgroundimage)
+        // Handle main image (backgroundimage) - optional for update
         $backgroundImage = $this->request->getFile('backgroundimage');
         if ($backgroundImage && $backgroundImage->isValid() && !$backgroundImage->hasMoved()) {
             if (in_array($backgroundImage->getMimeType(), $this->allowedImageTypes)) {
@@ -182,10 +274,6 @@ class AddProductController extends SessionController
                 $uploadedData['message'] = 'Invalid image type for main image. Allowed types: JPEG, PNG, GIF, WEBP';
                 return $uploadedData;
             }
-        } else {
-            $uploadedData['success'] = false;
-            $uploadedData['message'] = 'Main product image is required and must be valid';
-            return $uploadedData;
         }
         
         // Handle data sheet
@@ -262,12 +350,12 @@ class AddProductController extends SessionController
     {
         $categories = $this->request->getPost('categories');
         
+        $productCategoriesModel = new ProductCategoriesModel();
+        
+        // Remove any existing categories for this product first
+        $productCategoriesModel->where('product_id', $productId)->delete();
+        
         if ($categories && is_array($categories)) {
-            $productCategoriesModel = new ProductCategoriesModel();
-            
-            // Remove any existing categories for this product first
-            $productCategoriesModel->where('product_id', $productId)->delete();
-            
             foreach ($categories as $categoryId) {
                 // Validate category exists
                 $categoriesModel = new CategoriesModel();
@@ -283,13 +371,16 @@ class AddProductController extends SessionController
         }
     }
 
-    private function handleAdditionalImages($productId, $images)
+    private function handleAdditionalImages($productId, $newImages)
     {
-        if (!empty($images)) {
+        if (!empty($newImages)) {
             $productImagesModel = new ProductImagesModel();
             
-            $sortOrder = 1;
-            foreach ($images as $index => $imageData) {
+            // Get current max sort order
+            $currentImages = $productImagesModel->where('product_id', $productId)->findAll();
+            $sortOrder = count($currentImages) + 1;
+            
+            foreach ($newImages as $imageData) {
                 $productImagesModel->insert([
                     'product_id' => $productId,
                     'image_path' => $imageData['path'],
@@ -297,6 +388,81 @@ class AddProductController extends SessionController
                     'sort_order' => $sortOrder++
                 ]);
             }
+        }
+    }
+
+    private function handleImageDeletions($productId)
+    {
+        $deletedImages = $this->request->getPost('deleted_images');
+        
+        if ($deletedImages) {
+            $deletedIds = json_decode($deletedImages, true);
+            
+            if (is_array($deletedIds) && !empty($deletedIds)) {
+                $productImagesModel = new ProductImagesModel();
+                
+                foreach ($deletedIds as $imageId) {
+                    $image = $productImagesModel->find($imageId);
+                    
+                    if ($image && $image['product_id'] == $productId) {
+                        // Delete file from server
+                        $imagePath = $this->uploadPath . $image['image_path'];
+                        if (file_exists($imagePath)) {
+                            unlink($imagePath);
+                        }
+                        
+                        // Delete from database
+                        $productImagesModel->delete($imageId);
+                    }
+                }
+                
+                // Reorder remaining images
+                $this->reorderImages($productId);
+            }
+        }
+    }
+
+    private function reorderImages($productId)
+    {
+        $productImagesModel = new ProductImagesModel();
+        $images = $productImagesModel->where('product_id', $productId)->orderBy('sort_order', 'ASC')->findAll();
+        
+        $sortOrder = 1;
+        foreach ($images as $image) {
+            $productImagesModel->update($image['product_image_id'], ['sort_order' => $sortOrder++]);
+        }
+    }
+
+    public function updateImageOrder()
+    {
+        try {
+            $productId = $this->request->getPost('product_id');
+            $imageOrder = $this->request->getPost('image_order');
+            
+            if (!$productId || !$imageOrder) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Invalid request'
+                ]);
+            }
+            
+            $productImagesModel = new ProductImagesModel();
+            $imageOrder = json_decode($imageOrder, true);
+            
+            foreach ($imageOrder as $order => $imageId) {
+                $productImagesModel->update($imageId, ['sort_order' => $order + 1]);
+            }
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Image order updated successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error updating image order: ' . $e->getMessage()
+            ]);
         }
     }
 
@@ -405,7 +571,7 @@ class AddProductController extends SessionController
         }
     }
     
-    private function generateSlug($text)
+    private function generateSlug($text, $excludeProductId = null)
     {
         // Convert to lowercase and remove HTML tags
         $slug = strtolower(strip_tags($text));
@@ -448,9 +614,19 @@ class AddProductController extends SessionController
         $originalSlug = $slug;
         $counter = 1;
         
-        while ($productsModel->where('slug', $slug)->first()) {
+        $query = $productsModel->where('slug', $slug);
+        if ($excludeProductId) {
+            $query->where('product_id !=', $excludeProductId);
+        }
+        
+        while ($query->first()) {
             $slug = $originalSlug . '-' . $counter;
             $counter++;
+            
+            $query = $productsModel->where('slug', $slug);
+            if ($excludeProductId) {
+                $query->where('product_id !=', $excludeProductId);
+            }
         }
         
         return $slug;
@@ -489,6 +665,51 @@ class AddProductController extends SessionController
         // Write to file
         if (file_put_contents($filePath, $output) === false) {
             log_message('error', 'Failed to write dynamic routes to file: ' . $filePath);
+        }
+    }
+    
+    public function deleteImage($imageId)
+    {
+        try {
+            $productImagesModel = new ProductImagesModel();
+            $image = $productImagesModel->find($imageId);
+            
+            if (!$image) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Image not found'
+                ]);
+            }
+            
+            // Delete file from server
+            $imagePath = $this->uploadPath . $image['image_path'];
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+            
+            // Delete from database
+            $deleted = $productImagesModel->delete($imageId);
+            
+            if ($deleted) {
+                // Reorder remaining images
+                $this->reorderImages($image['product_id']);
+                
+                return $this->response->setJSON([
+                    'success' => true,
+                    'message' => 'Image deleted successfully'
+                ]);
+            } else {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Failed to delete image'
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error deleting image: ' . $e->getMessage()
+            ]);
         }
     }
 }

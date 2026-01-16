@@ -19,8 +19,8 @@ $(document).ready(function() {
         followingToolbar: false
     });
 
-    // Load categories on page load
-    getCategories();
+    // Initialize with existing categories
+    initializeCategories();
 
     // Handle category addition
     $('#addCategoryBtn').click(function() {
@@ -36,9 +36,9 @@ $(document).ready(function() {
     });
 
     // Main form submission
-    $('#addproduct').submit(function(event) {
+    $('#editproduct').submit(function(event) {
         event.preventDefault();
-        saveProduct();
+        updateProduct();
     });
 
     // Calculate volume when dimensions change
@@ -46,6 +46,22 @@ $(document).ready(function() {
 
     // Generate barcode
     $('#generateBarcode').click(generateBarcode);
+
+    // Make images sortable
+    if ($('#currentImagesContainer').length) {
+        $('#currentImagesContainer').sortable({
+            handle: '.card',
+            update: function(event, ui) {
+                updateImageOrder();
+            }
+        });
+    }
+
+    // Delete image button
+    $(document).on('click', '.delete-image-btn', function() {
+        const imageId = $(this).data('id');
+        deleteImage(imageId);
+    });
 
     $(document).on('click', '.delete-category-btn', function () {
         let id = $(this).data('id');
@@ -63,7 +79,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/admin/addproduct/deleteCategory/' + id,
+                    url: '/admin/editproduct/deleteCategory/' + id,
                     method: 'DELETE',
                     dataType: 'json',
                     success: function (response) {
@@ -95,13 +111,33 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Initialize volume calculation
+    calculateVolume();
 });
 
+// Initialize categories from hidden input
+function initializeCategories() {
+    const selectedCategoriesJson = $('#selected_categories_json').val();
+    let selectedCategories = [];
+    
+    if (selectedCategoriesJson) {
+        try {
+            selectedCategories = JSON.parse(selectedCategoriesJson);
+        } catch (e) {
+            console.error('Error parsing categories JSON:', e);
+        }
+    }
+    
+    // Load all categories
+    getCategories(selectedCategories);
+}
+
 // Function to load categories
-function getCategories() {
+function getCategories(selectedCategories = []) {
     $.ajax({
         type: 'GET',
-        url: '/admin/addproduct/getCategories',
+        url: '/admin/editproduct/getCategories',
         dataType: 'json',
         beforeSend: function() {
             $('#categoriesList').html(`
@@ -115,7 +151,7 @@ function getCategories() {
         },
         success: function(response) {
             if (response.success && response.categories) {
-                renderCategories(response.categories);
+                renderCategories(response.categories, selectedCategories);
             } else {
                 $('#categoriesList').html(`
                     <div class="alert alert-warning">
@@ -135,8 +171,8 @@ function getCategories() {
     });
 }
 
-// Function to render categories
-function renderCategories(categories) {
+// Function to render categories with preselected ones
+function renderCategories(categories, selectedCategories = []) {
     if (categories.length === 0) {
         $('#categoriesList').html(`
             <div class="alert alert-info">
@@ -148,12 +184,13 @@ function renderCategories(categories) {
 
     let html = '';
     categories.forEach(function(category) {
+        const isSelected = selectedCategories.includes(parseInt(category.category_id));
         html += `
             <div class="d-flex align-items-center justify-content-between mb-2 p-2 border rounded">
                 <div class="form-check m-0">
                     <input class="form-check-input category-checkbox" type="checkbox" 
                         name="categories[]" id="category_${category.category_id}" 
-                        value="${category.category_id}">
+                        value="${category.category_id}" ${isSelected ? 'checked' : ''}>
                     <label class="form-check-label ml-2" for="category_${category.category_id}">
                         ${category.categoryname}
                     </label>
@@ -196,7 +233,7 @@ function addCategory() {
     
     $.ajax({
         type: 'POST',
-        url: '/admin/addproduct/addCategory',
+        url: '/admin/editproduct/addCategory',
         data: {
             category_name: categoryName
         },
@@ -218,12 +255,13 @@ function addCategory() {
                     showConfirmButton: false
                 });
                 
-                // Reload categories
-                getCategories();
+                // Reload categories with current selections
+                const selectedCategories = getCurrentSelectedCategories();
+                getCategories(selectedCategories);
                 
                 // Automatically select the newly added category
                 setTimeout(function() {
-                    $(`#category_${response.category.id}`).prop('checked', true).trigger('change');
+                    $(`#category_${response.category.category_id}`).prop('checked', true).trigger('change');
                 }, 100);
                 
             } else {
@@ -248,18 +286,18 @@ function addCategory() {
     });
 }
 
+// Function to get current selected categories
+function getCurrentSelectedCategories() {
+    const selectedCategories = [];
+    $('.category-checkbox:checked').each(function() {
+        selectedCategories.push(parseInt($(this).val()));
+    });
+    return selectedCategories;
+}
+
 // Function to update selected categories display
 function updateSelectedCategories() {
-    const selectedCategories = [];
-    
-    $('.category-checkbox:checked').each(function() {
-        const categoryId = $(this).val();
-        const categoryName = $(this).next('label').text().trim();
-        selectedCategories.push({
-            id: categoryId,
-            name: categoryName
-        });
-    });
+    const selectedCategories = getCurrentSelectedCategories();
     
     const container = $('#selectedCategories');
     
@@ -269,18 +307,21 @@ function updateSelectedCategories() {
                 No categories selected
             </div>
         `);
-        // Clear the hidden input
-        $('#selected_categories_json').val('');
+        // Update the hidden input
+        $('#selected_categories_json').val(JSON.stringify(selectedCategories));
         return;
     }
     
+    // Get category names
     let html = '<div class="d-flex flex-wrap gap-2">';
-    selectedCategories.forEach(function(category) {
+    $('.category-checkbox:checked').each(function() {
+        const categoryId = $(this).val();
+        const categoryName = $(this).next('label').text().trim();
         html += `
             <span class="badge badge-primary py-2 px-3 d-flex align-items-center m-1">
-                ${category.name}
+                ${categoryName}
                 <button type="button" class="btn btn-sm btn-link text-white ml-2 p-0" 
-                        onclick="unselectCategory(${category.id})">
+                        onclick="unselectCategory(${categoryId})">
                     <i class="fa fa-times"></i>
                 </button>
             </span>
@@ -290,9 +331,8 @@ function updateSelectedCategories() {
     
     container.html(html);
     
-    // Store selected categories as JSON in hidden input
-    const categoryIds = selectedCategories.map(cat => cat.id);
-    $('#selected_categories_json').val(JSON.stringify(categoryIds));
+    // Update the hidden input
+    $('#selected_categories_json').val(JSON.stringify(selectedCategories));
 }
 
 // Function to unselect a category
@@ -324,8 +364,101 @@ function generateBarcode() {
     $('#barcode_ean13').val(barcode);
 }
 
-// Function to save product
-function saveProduct() {
+// Function to delete image
+function deleteImage(imageId) {
+    Swal.fire({
+        title: 'Delete Image',
+        text: 'Are you sure you want to delete this image?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/admin/editproduct/deleteImage/' + imageId,
+                method: 'DELETE',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Remove from UI
+                        $(`.image-item[data-id="${imageId}"]`).remove();
+                        
+                        // Add to deleted images list
+                        let deletedImages = $('#deleted_images').val();
+                        let deletedArray = [];
+                        
+                        if (deletedImages) {
+                            try {
+                                deletedArray = JSON.parse(deletedImages);
+                            } catch (e) {
+                                console.error(e);
+                            }
+                        }
+                        
+                        deletedArray.push(imageId);
+                        $('#deleted_images').val(JSON.stringify(deletedArray));
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: response.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to delete image'
+                    });
+                }
+            });
+        }
+    });
+}
+
+// Function to update image order
+function updateImageOrder() {
+    const productId = $('input[name="product_id"]').val();
+    const imageOrder = [];
+    
+    $('#currentImagesContainer .image-item').each(function(index) {
+        const imageId = $(this).data('id');
+        imageOrder.push(imageId);
+    });
+    
+    $.ajax({
+        type: 'POST',
+        url: '/admin/editproduct/updateImageOrder',
+        data: {
+            product_id: productId,
+            image_order: JSON.stringify(imageOrder)
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (!response.success) {
+                console.error('Failed to update image order:', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error updating image order:', error);
+        }
+    });
+}
+
+// Function to update product
+function updateProduct() {
     // Get the selected categories from hidden input
     const selectedCategoriesJson = $('#selected_categories_json').val();
     let selectedCategories = [];
@@ -339,7 +472,7 @@ function saveProduct() {
     }
     
     // Create FormData object
-    const formData = new FormData($('#addproduct')[0]);
+    const formData = new FormData($('#editproduct')[0]);
     
     // Clear any existing categories from formData
     formData.delete('categories[]');
@@ -359,17 +492,19 @@ function saveProduct() {
         return;
     }
 
+    const productId = formData.get('product_id');
+    
     // Send AJAX request
     $.ajax({
         type: 'POST',
-        url: '/admin/addproduct/insert',
+        url: '/admin/editproduct/update/' + productId,
         data: formData,
         processData: false,
         contentType: false,
         dataType: 'json',
         beforeSend: function() {
             Swal.fire({
-                title: 'Saving...',
+                title: 'Updating...',
                 allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
@@ -386,10 +521,8 @@ function saveProduct() {
                     confirmButtonText: 'OK'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        $('#addproduct')[0].reset();
-                        $('.note-editable').empty();
-                        updateSelectedCategories();
-                        getCategories();
+                        // Optional: Redirect to product list or stay on page
+                        window.location.href = '/admin/product-masterlist';
                     }
                 });
             } else {
@@ -405,9 +538,29 @@ function saveProduct() {
             Swal.fire({
                 icon: 'error',
                 title: 'Oops...',
-                text: 'An error occurred while saving product. Please try again later.',
+                text: 'An error occurred while updating product. Please try again later.',
             });
             console.error(xhr.responseText);
         }
     });
 }
+
+// File input label update
+$(document).on('change', '.custom-file-input', function() {
+    let fileName = $(this).val().split('\\').pop();
+    $(this).next('.custom-file-label').addClass("selected").html(fileName);
+});
+
+// Preview button
+$('#previewBtn').click(function() {
+    const productId = $('input[name="product_id"]').val();
+    if (productId) {
+        window.open('/product-preview/' + productId, '_blank');
+    } else {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cannot Preview',
+            text: 'Please save the product first to preview it.'
+        });
+    }
+});

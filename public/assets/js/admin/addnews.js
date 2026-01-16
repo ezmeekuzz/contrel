@@ -1,6 +1,6 @@
 $(document).ready(function() {
     // Initialize Summernote
-    $('#description').summernote({
+    $('#content').summernote({
         toolbar: [
             ['style', ['style']],
             ['fontsize', ['fontsize']],
@@ -36,16 +36,10 @@ $(document).ready(function() {
     });
 
     // Main form submission
-    $('#addproduct').submit(function(event) {
+    $('#addnews').submit(function(event) {
         event.preventDefault();
         saveProduct();
     });
-
-    // Calculate volume when dimensions change
-    $('#package_length, #package_width, #package_height').on('input', calculateVolume);
-
-    // Generate barcode
-    $('#generateBarcode').click(generateBarcode);
 
     $(document).on('click', '.delete-category-btn', function () {
         let id = $(this).data('id');
@@ -63,7 +57,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/admin/addproduct/deleteCategory/' + id,
+                    url: '/admin/addnews/deleteCategory/' + id,
                     method: 'DELETE',
                     dataType: 'json',
                     success: function (response) {
@@ -101,7 +95,7 @@ $(document).ready(function() {
 function getCategories() {
     $.ajax({
         type: 'GET',
-        url: '/admin/addproduct/getCategories',
+        url: '/admin/addnews/getCategories',
         dataType: 'json',
         beforeSend: function() {
             $('#categoriesList').html(`
@@ -196,7 +190,7 @@ function addCategory() {
     
     $.ajax({
         type: 'POST',
-        url: '/admin/addproduct/addCategory',
+        url: '/admin/addnews/addCategory',
         data: {
             category_name: categoryName
         },
@@ -300,30 +294,6 @@ function unselectCategory(categoryId) {
     $(`#category_${categoryId}`).prop('checked', false).trigger('change');
 }
 
-// Function to calculate volume
-function calculateVolume() {
-    const length = parseFloat($('#package_length').val()) || 0;
-    const width = parseFloat($('#package_width').val()) || 0;
-    const height = parseFloat($('#package_height').val()) || 0;
-    
-    if (length > 0 && width > 0 && height > 0) {
-        const volume = (length * width * height) / 1000; // Convert to cm³
-        $('#volume_cm3').val(volume.toFixed(2));
-    } else {
-        $('#volume_cm3').val('');
-    }
-}
-
-// Function to generate barcode
-function generateBarcode() {
-    // Generate a random 13-digit barcode
-    let barcode = '';
-    for (let i = 0; i < 13; i++) {
-        barcode += Math.floor(Math.random() * 10);
-    }
-    $('#barcode_ean13').val(barcode);
-}
-
 // Function to save product
 function saveProduct() {
     // Get the selected categories from hidden input
@@ -339,7 +309,7 @@ function saveProduct() {
     }
     
     // Create FormData object
-    const formData = new FormData($('#addproduct')[0]);
+    const formData = new FormData($('#addnews')[0]);
     
     // Clear any existing categories from formData
     formData.delete('categories[]');
@@ -350,7 +320,7 @@ function saveProduct() {
     });
     
     // Validate required fields
-    if (!formData.get('productname') || !formData.get('order_code') || !formData.get('description')) {
+    if (!formData.get('title') || !formData.get('short_description') || !formData.get('content')) {
         Swal.fire({
             icon: 'error',
             title: 'Oops...',
@@ -362,7 +332,7 @@ function saveProduct() {
     // Send AJAX request
     $.ajax({
         type: 'POST',
-        url: '/admin/addproduct/insert',
+        url: '/admin/addnews/insert',
         data: formData,
         processData: false,
         contentType: false,
@@ -386,8 +356,8 @@ function saveProduct() {
                     confirmButtonText: 'OK'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        $('#addproduct')[0].reset();
-                        $('.note-editable').empty();
+                        $('#addnews')[0].reset();
+                        $("#tags").val('');
                         updateSelectedCategories();
                         getCategories();
                     }

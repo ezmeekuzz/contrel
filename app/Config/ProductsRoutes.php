@@ -1,7 +1,6 @@
 <?php
 
 // Auto-generated product routes
-// Generated on: 2026-01-14 19:24:40
+// Generated on: 2026-01-16 11:02:54
 
-$routes->get('edsf', 'ProductDetailsController::index/3');
-$routes->get('sdfsfsdf-sdfsd-fsfsdf-dsfsd-f', 'ProductDetailsController::index/4');
+$routes->get('elm-4-ammeter-for-n-4-currents-line-or-residual-currents', 'ProductDetailsController::index/5');

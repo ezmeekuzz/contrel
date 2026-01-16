@@ -33,10 +33,6 @@
                                 <div class="card-heading">
                                     <h4 class="card-title float-left"><i class="ti ti-map"></i> Product Details</h4>
                                     <div class="float-right d-flex align-items-center">
-                                        <!-- Media Place Button -->
-                                        <button type="button" class="btn btn-sm btn-info mr-3" id="mediaManagerBtn">
-                                            <i class="fa fa-image"></i> Media
-                                        </button>
                                         
                                         <!-- Publish Switch -->
                                         <div class="form-group m-0">
